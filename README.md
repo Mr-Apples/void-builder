@@ -3,7 +3,7 @@ This project automatically builds packages from the [void package repository](ht
 # Building
 This project is built with cmake:
 ```shell
-git clone https://github.com/Mr-Apples/Void-Nonfree-Builder.git # Clone the repo
+git clone https://github.com/Mr-Apples/void-builder.git # Clone the repo
 mkdir void-builder/build && cd void-builder/build # Create and enter build directory
 cmake ../src # Generate build files
 make # Build with make
