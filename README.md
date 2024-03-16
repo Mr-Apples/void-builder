@@ -10,4 +10,4 @@ make # Build with make
 ```
 After this, place the generate executable wherever you like.
 # Usage
-The tool runs a daemon which will periodically check for updates to the repos it is set up to build, after an update it will build the packages and output a local repo containing them. Config file locations have not yet been determined, neither has the package output location; these will be determined when the project gets out of its infancy.
+The tool runs a daemon which will periodically check for updates to the repos it is set up to build, after an update it will build the packages and output a local repo containing them. Current the project is still literally hello world so I will document it more after it's more complete.
