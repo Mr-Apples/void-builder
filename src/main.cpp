@@ -1,7 +1,7 @@
 #include <iostream>
-#include "git/git-helper.hpp"
+#include "git/gitHelper.hpp"
 using namespace std;
 
 int main(int argc, char** argv) {
-    githelper::clone("yolo");
+    return 0;
 }
