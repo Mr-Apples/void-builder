@@ -7,6 +7,6 @@
 namespace gitHelper {
     std::string getRepoName(std::string);
     
-    git_repository* clone(std::string);
+    git_repository* clone(std::string, std::string);
 }
 #endif

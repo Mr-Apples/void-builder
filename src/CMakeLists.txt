@@ -8,5 +8,5 @@ add_subdirectory(git)
 
 # Compile main executable
 add_executable(void-builder ./main.cpp)
-target_link_libraries(void-builder PUBLIC ${LIBGIT2_LIBRARY_DIRS} git-helper)
+target_link_libraries(void-builder PUBLIC ${LIBGIT2_LIBRARY_DIRS} gitHelper)
 target_include_directories(void-builder PUBLIC ${LIBGIT2_INCLUDE_DIRS})

@@ -2,33 +2,30 @@
 #include <git2.h>
 #include <iostream>
 #include <regex>
-using namespace std;
 
 namespace gitHelper {
-    std::string getRepoName(std::string repoURL) {
-        // If '.git' is in the string remove it
-        if (repoURL.substr(repoURL.size() - string(".git").size()) == ".git") {
-            repoURL = repoURL.substr(0, repoURL.size() - string(".git").size());
-        }
-
-        // Find the last '/' in the URL, anything after this '/' will be the name
-        int _i = 0;
-        int nameIndex = 0;
-        for (auto i = repoURL.begin(); i < repoURL.end(); i++) {
-            if (*i == *"/") {
-                nameIndex = _i + 1;
+    std::string removeSlashesFromString(std::string string) {
+        for (char i : string) {
+            if (i == '/') {
+                string.erase(std::remove(string.begin(), string.end(), '/'), string.end());
             }
-
-            _i++;
         }
-        
-        // Otherwise we can remove everything before name index
-        repoURL = repoURL.substr(nameIndex, string::npos);
 
-        return repoURL;
+        return string;
     }
 
-    git_repository* clone(std::string repoURL) {
+    git_repository* clone(std::string repoURL, std::string path) {
+        // Create a pointer to a git_repository object
+        git_repository* repo;
+        path += removeSlashesFromString(repoURL) + '/';
+
+        int error = git_clone(&repo, repoURL.c_str(), path.c_str(), NULL);
         
+        // If there was an error print the error code
+        if (error) {
+            std::cout << "void-builder: " << git_error_last()->message << std::endl;
+        }
+
+        return repo;
     }
 }
