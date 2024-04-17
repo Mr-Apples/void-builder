@@ -83,3 +83,7 @@ obj/
 # Custom
 .vscode
 build
+
+# Added by cargo
+
+/target
