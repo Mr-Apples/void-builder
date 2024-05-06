@@ -1,4 +1,5 @@
-use std::{fs::OpenOptions, path::Path};
+//! A tool that automatically builds xbps-src packages from github repositories
+use std::*;
 
 pub mod git_helper;
 
@@ -17,8 +18,8 @@ extern crate daemonize;
 ///     Path::new("/tmp/void-builder.err"), 
 ///     Path::new("/tmp/void-builder.pid"));
 /// ```
-fn daemonize(stdout: &Path, stderr: &Path, pidfile: &Path) -> bool {
-    let stdout = match OpenOptions::new().append(true).create(true).open(stdout) {
+fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> bool {
+    let stdout = match fs::OpenOptions::new().append(true).create(true).open(stdout) {
         Ok(file) => file,
         Err(e) => {
             eprintln!("Void-Builder: {}", e.to_string());
@@ -27,7 +28,7 @@ fn daemonize(stdout: &Path, stderr: &Path, pidfile: &Path) -> bool {
         }
     };
 
-    let stderr = match OpenOptions::new().append(true).create(true).open(stderr) {
+    let stderr = match fs::OpenOptions::new().append(true).create(true).open(stderr) {
         Ok(file) => file,
         Err(e) => {
             eprintln!("Void-Builder: {}", e.to_string());

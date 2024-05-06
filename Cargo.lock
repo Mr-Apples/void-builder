@@ -702,6 +702,7 @@ dependencies = [
  "config",
  "daemonize",
  "git2",
+ "url",
 ]
 
 [[package]]
