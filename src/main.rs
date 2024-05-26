@@ -1,9 +1,9 @@
-//! A tool that automatically builds xbps-src packages from github repositories
+//! A tool that automatically builds xbps-src packages from gitHub repositories
 use std::*;
 
 pub mod git_helper;
 
-/// Daemonizes the program, creates a pidfile and appends stdout + stdin to the given locations.
+/// Daemonize the program, creates a pidfile and appends stdout + stdin to the given locations.
 /// The parameter `stdout`, `stderr` and `pidfile` are the locations of the stdout file, stdin file and pid file respectively.
 /// Returns `true` if the daemonization succeeded.
 /// 
@@ -42,21 +42,19 @@ fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> 
         .stdout(stdout)
         .stderr(stderr);
 
-    match daemon.start() {
-      Ok(_) => {
-            println!("Void-Builder: Daemonized successfully");
+    return match daemon.start() {
+        Ok(_) => {
+            println!("Void-Builder: Demonized successfully");
 
-            return true;
+            true
         },
-      Err(e) => {
+        Err(e) => {
             eprintln!("Void-Builder: {}", e);
 
-            return false;
+            false
         }
     };
 }
 
 fn main() {
-    let repo = git2::Repository::open("/var/local/void-builder/https:github.comMr-Applesrepo-update-test.git/").unwrap();
-    
 }
