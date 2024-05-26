@@ -74,76 +74,47 @@ pub fn clone_repo(url: &str, dir: &path::Path) -> Option<Repository> {
     };
 }
 
-/// Updates the given repositoy with upstream commit history, takes the repository object.
-/// Returns true if it succeeds.
+/// Updates the given repositoy with 
+/// upstream commit history for the given refspecs, 
+/// takes the repository object.
+/// Returns true if it succeeds
 /// 
 /// ```rust
 /// // Updates a repository 
 /// repository = git2::Repository::open("/path/to/repo");
-/// update_repo(repository);
+/// update_repo_branch(repository);
 /// ```
-pub fn update_repo(repo: &Repository) -> bool {
-    let remotes = match repo.remotes() {
-        Ok(str_array) => str_array,
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e.message());
-            return false;
-        }
-    };
+pub fn update_repo_branch(repo: &Repository, branch_name: &str) -> Result<(), git2::Error> {
+    // Get the remote and fetch all new commits
+    let mut remote = repo.find_remote("origin")?;
+    remote.fetch(&[""], None, None)?;
 
-    for remote_name in remotes.iter() {
-        let mut remote = match remote_name {
-            Some(remote_name) => {
-                match repo.find_remote(remote_name) {
-                    Ok(remote) => remote,
-                    Err(e) => {
-                        eprintln!("Void-Builder: {}", e.message());
-                        return false;
-                    }
-                }
-            },
-            None => {
-                eprintln!("Void-Builder: Error: Failed to parse remote name: name not in utf8");
-                return false;
-            }
-        };
+    // Get the current latest commit for this branch
+    let current_commit = find_last_commit_for_branch(repo, branch_name)?;
 
-        let refspecs = match get_remote_fetch_refspecs(&remote) {
-            Ok(str_array) => str_array,
-            Err(e) => {
-                println!("Void-Builder: {}", e.message());
-                return false;
-            }
-        };
+    // Find the new latest commit
+    let new_commit_reference = repo.find_reference("FETCH_HEAD")?;
 
-        for refspec in refspecs.into_iter() {
-            let refspec = match refspec {
-                Some(_str) => _str,
-                None => {
-                    eprintln!("Void-Builder: Error: Cannot parse refspec: refspec is not utf8");
-                    return false;
-                }
-            };
+    let new_commit = new_commit_reference.peel_to_commit()?;
 
-            match remote.fetch(&[refspec], None, None) {
-                Ok(()) => (),
-                Err(e) => {
-                    println!("Void-Builder: {}", e.message());
-                    return false;
-                }
-            }
-        }
-    };
+    let mut index = repo.merge_commits(&current_commit, &new_commit, None)?;
 
-    return true;
+    repo.checkout_index(Some(&mut index), None)?;
+    
+    return Ok(());
 }
 
 /// Gets the string array of fetch refspecs for a remote
 fn get_remote_fetch_refspecs(remote: &Remote) -> Result<string_array::StringArray, git2::Error> {
-    match remote.fetch_refspecs() {
-        Ok(str_array) => return Ok(str_array),
-        Err(e) => {
-            return Err(e);
-        }
+    return Ok(remote.fetch_refspecs()?);
+}
+
+/// Returns the last commit on a given branch
+fn find_last_commit_for_branch<'a>(repo: &'a Repository, branch_name: &str) -> Result<Commit<'a>, Error> {
+    let obj = repo.find_branch(branch_name, BranchType::Local)?.into_reference().peel(ObjectType::Commit)?;
+    
+    match obj.into_commit() {
+        Ok(commit) => return Ok(commit),
+        Err(obj) => return Err(Error::from_str(&format!("Unable to find the last commit of branch: {}", branch_name)))
     }
 }

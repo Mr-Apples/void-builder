@@ -3,10 +3,6 @@ use std::*;
 
 pub mod git_helper;
 
-extern crate daemonize;
-
-/// TODO: read options from config file
-/// 
 /// Daemonizes the program, creates a pidfile and appends stdout + stdin to the given locations.
 /// The parameter `stdout`, `stderr` and `pidfile` are the locations of the stdout file, stdin file and pid file respectively.
 /// Returns `true` if the daemonization succeeded.
@@ -61,4 +57,6 @@ fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> 
 }
 
 fn main() {
+    let repo = git2::Repository::open("/var/local/void-builder/https:github.comMr-Applesrepo-update-test.git/").unwrap();
+    
 }
