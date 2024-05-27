@@ -39,27 +39,15 @@ pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Reposito
 /// // Clone a repo
 /// repo = clone_repo("https://github.com/Mr-Apples/void-builder.git", "/var/local/void-builder/");
 /// ```
-pub fn clone_repo(url: &str, dir: &path::Path) -> Option<Repository> {
-    let url_object = match url::Url::parse(url) {
-        Ok(url) => url,
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e.to_string());
-            return None;
-        }
-    };
+pub fn clone_repo(url: &str, dir: &path::Path) -> Result<Repository, impl VoidBuilderError> {
+    let url_object = url::Url::parse(url)?;
 
     let mut dir_buf: path::PathBuf = dir.to_path_buf();
     dir_buf = dir_buf.join(path::Path::new(
         &url_object.to_string().replace("/", "")
     ));
 
-    return match Repository::clone(&url, dir_buf) {
-        Ok(repo) => Some(repo),
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e.message());
-            return None;
-        }
-    };
+    return Repository::clone(&url, dir_buf);
 }
 
 /// Updates the given repository with upstream commit history, takes the repository object.
@@ -75,7 +63,7 @@ pub fn update_repo(repo: &Repository, branch: &str) -> Result<(), impl VoidBuild
     let mut remote = repo.find_remote("origin")?;
 
     // Do the fetch
-    remote.fetch(&format!("refs/heads/{}:refs/remotes/origin/{}", branch, branch), None, None)?;
+    remote.fetch(&[format!("refs/heads/{}:refs/remotes/origin/{}", branch, branch)], None, None)?;
 
     // Get
 }
@@ -107,5 +95,11 @@ impl VoidBuilderError for git2::Error {
 impl VoidBuilderError for std::io::Error {
     fn err_msg(self) -> String {
         return format!("{}", self);
+    }
+}
+
+impl VoidBuilderError for url::ParseError {
+    fn err_msg(self) -> String {
+        return self.to_string();
     }
 }
