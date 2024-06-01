@@ -1,9 +1,6 @@
 use git2::*;
 use std::*;
-use std::error::Error;
 
-/// TODO: Fix error and add trait for errors
-///
 /// Returns a vector that contains all repositories in the given directory,
 /// takes the path that contains the repos.
 /// 
@@ -11,7 +8,7 @@ use std::error::Error;
 /// // Gets all repos in a given directory
 /// repos = detect_repos_in_dir("/var/local/void-builder/");
 /// ```
-pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Repository>, impl VoidBuilderError> {
+pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Repository>, VoidBuilderError> {
     // Get an iterator for the directory in which to detect repositories
     let repo_dir_iter = fs::read_dir(repo_storage_dir)?;
 
@@ -25,7 +22,7 @@ pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Reposito
 
                 repositories.push(repo);
             }
-            Err(e) => return Err(e)
+            Err(e) => return Err(VoidBuilderError::from(e))
         };
     }
 
@@ -39,27 +36,15 @@ pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Reposito
 /// // Clone a repo
 /// repo = clone_repo("https://github.com/Mr-Apples/void-builder.git", "/var/local/void-builder/");
 /// ```
-pub fn clone_repo(url: &str, dir: &path::Path) -> Option<Repository> {
-    let url_object = match url::Url::parse(url) {
-        Ok(url) => url,
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e.to_string());
-            return None;
-        }
-    };
+pub fn clone_repo(url: &str, dir: &path::Path) -> Result<Repository, VoidBuilderError> {
+    let url_object = url::Url::parse(url)?;
 
     let mut dir_buf: path::PathBuf = dir.to_path_buf();
     dir_buf = dir_buf.join(path::Path::new(
         &url_object.to_string().replace("/", "")
     ));
 
-    return match Repository::clone(&url, dir_buf) {
-        Ok(repo) => Some(repo),
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e.message());
-            return None;
-        }
-    };
+    return Ok(Repository::clone(&url, dir_buf)?);
 }
 
 /// Updates the given repository with upstream commit history, takes the repository object.
@@ -70,42 +55,68 @@ pub fn clone_repo(url: &str, dir: &path::Path) -> Option<Repository> {
 /// repository = git2::Repository::open("/path/to/repo");
 /// update_repo(repository);
 /// ```
-pub fn update_repo(repo: &Repository, branch: &str) -> Result<(), impl VoidBuilderError> {
+pub fn update_repo_branch(repo: &Repository, branch: &str) -> Result<(), VoidBuilderError> {
     // Get remote
     let mut remote = repo.find_remote("origin")?;
 
     // Do the fetch
-    remote.fetch(&format!("refs/heads/{}:refs/remotes/origin/{}", branch, branch), None, None)?;
+    remote.fetch(&[format!("refs/heads/{}:refs/remotes/origin/{}", branch, branch)], None, None)?;
 
-    // Get
+    // Get latest current commit
+    let latest_current_commit = get_latest_commit_for_branch(repo, branch)?;
+
+    // Get latest upstream commit
+    let latest_upstream_commit = repo.find_reference("FETCH_HEAD")?.peel_to_commit()?;
+
+    // Merge latest changes and return the index
+    let mut index = repo.merge_commits(&latest_current_commit, &latest_upstream_commit, None)?;
+
+    // Check out the index
+    repo.checkout_index(Some(&mut index), None)?;
+
+    // Set head to the newly merged commit
+    return Ok(repo.set_head(branch)?);
 }
 
-/// Gets the string array of fetch refspecs for a remote
-fn get_remote_fetch_refspecs(remote: &Remote) -> Result<string_array::StringArray, impl VoidBuilderError> {
-    return match remote.fetch_refspecs() {
-        Ok(str_array) => Ok(str_array),
-        Err(e) => {
-            Err(e)
+/// Returns the commit pointed at by the given branch
+fn get_latest_commit_for_branch<'a>(repo: &'a Repository, branch_name: &str) -> Result<Commit<'a>, Error> {
+    return repo.find_branch(branch_name, BranchType::Local)?.into_reference().peel_to_commit();
+}
+
+/// Struct to contain errors encountered by Void Builder
+pub struct VoidBuilderError {
+    message: String
+}
+
+impl VoidBuilderError {
+    /// Creates a new VoidBuilderError from the given error
+    fn new(message: String) -> VoidBuilderError {
+        VoidBuilderError {
+            message
         }
     }
 }
 
-/// Trait for error types void-builder will encounter, contains a function to get the error message.
-trait VoidBuilderError {
-    /// Returns the error message
-    fn err_msg(self) -> String;
-}
-
-// Implement the trait on git2::Error
-impl VoidBuilderError for git2::Error {
-    fn err_msg(self) -> String {
-        return self.message().to_string();
+/// Implements From<git2::Error> on VoidBuilderError
+impl From<Error> for VoidBuilderError {
+    /// Creates a VoidBuilderError from a git2::Error
+    fn from(value: Error) -> Self {
+        return VoidBuilderError::new(value.message().to_string());
     }
 }
 
-// Implement the trait on std::io::Error
-impl VoidBuilderError for std::io::Error {
-    fn err_msg(self) -> String {
-        return format!("{}", self);
+/// Implements From<std::io::Error> on VoidBuilderError
+impl From<io::Error> for VoidBuilderError {
+    /// Create a VoidBuilderError from a std::io::Error
+    fn from(value: io::Error) -> Self {
+        return VoidBuilderError::new(value.to_string());
+    }
+}
+
+/// Implements From<url::ParseError> on VoidBuilderError
+impl From<url::ParseError> for VoidBuilderError {
+    /// Create a VoidBuilderError from a url::ParseError
+    fn from(value: url::ParseError) -> Self {
+        return VoidBuilderError::new(value.to_string());
     }
 }
