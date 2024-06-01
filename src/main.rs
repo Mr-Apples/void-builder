@@ -1,6 +1,6 @@
 //! A tool that automatically builds xbps-src packages from gitHub repositories
 use std::*;
-use crate::git_helper::VoidBuilderError;
+use error::VoidBuilderError;
 
 // Modules
 /// A module containing helper functions for git related tasks
