@@ -1,7 +1,13 @@
 //! A tool that automatically builds xbps-src packages from gitHub repositories
 use std::*;
+use crate::git_helper::VoidBuilderError;
 
+// Modules
+/// A module containing helper functions for git related tasks
 pub mod git_helper;
+
+/// A module containing an error struct used by Void Builder
+pub mod error;
 
 /// Daemonize the program, creates a pidfile and appends stdout + stdin to the given locations.
 /// The parameter `stdout`, `stderr` and `pidfile` are the locations of the stdout file, stdin file and pid file respectively.
@@ -14,24 +20,10 @@ pub mod git_helper;
 ///     Path::new("/tmp/void-builder.err"), 
 ///     Path::new("/tmp/void-builder.pid"));
 /// ```
-fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> bool {
-    let stdout = match fs::OpenOptions::new().append(true).create(true).open(stdout) {
-        Ok(file) => file,
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e.to_string());
+fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> Result<(), VoidBuilderError> {
+    let stdout = fs::OpenOptions::new().append(true).create(true).open(stdout)?;
 
-            return false;
-        }
-    };
-
-    let stderr = match fs::OpenOptions::new().append(true).create(true).open(stderr) {
-        Ok(file) => file,
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e.to_string());
-
-            return false;
-        }
-    };
+    let stderr = fs::OpenOptions::new().append(true).create(true).open(stderr)?;
 
     let daemon = daemonize::Daemonize::new()
         .pid_file(pidfile)
@@ -42,18 +34,7 @@ fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> 
         .stdout(stdout)
         .stderr(stderr);
 
-    return match daemon.start() {
-        Ok(_) => {
-            println!("Void-Builder: Demonized successfully");
-
-            true
-        },
-        Err(e) => {
-            eprintln!("Void-Builder: {}", e);
-
-            false
-        }
-    };
+    return Ok(daemon.start()?);
 }
 
 fn main() {
