@@ -1,7 +1,7 @@
 //! A tool that automatically builds xbps-src packages from git repositories
-use std::*;
-use std::process::ExitCode;
 use error::VoidBuilderError;
+use std::process::ExitCode;
+use std::*;
 
 // Modules
 /// A module containing helper functions for git related tasks
@@ -21,14 +21,24 @@ mod test;
 /// ```rust
 /// // Daemonize the program
 /// daemonize(
-///     Path::new("/tmp/void-builder.out"), 
-///     Path::new("/tmp/void-builder.err"), 
+///     Path::new("/tmp/void-builder.out"),
+///     Path::new("/tmp/void-builder.err"),
 ///     Path::new("/tmp/void-builder.pid"));
 /// ```
-fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> Result<(), VoidBuilderError> {
-    let stdout = fs::OpenOptions::new().append(true).create(true).open(stdout)?;
+fn daemonize(
+    stdout: &path::Path,
+    stderr: &path::Path,
+    pidfile: &path::Path,
+) -> Result<(), VoidBuilderError> {
+    let stdout = fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(stdout)?;
 
-    let stderr = fs::OpenOptions::new().append(true).create(true).open(stderr)?;
+    let stderr = fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(stderr)?;
 
     let daemon = daemonize::Daemonize::new()
         .pid_file(pidfile)
@@ -43,11 +53,30 @@ fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> 
 }
 
 fn main() -> ExitCode {
-    // Daemonize
-    if error::handle(daemonize(path::Path::new("/tmp/void-builder.out"), path::Path::new("/tmp/void-builder.err"), path::Path::new("/tmp/void-builder.pid"))) == None {
-        return ExitCode::FAILURE
+    // Get command-line args
+    let args: Vec<_> = env::args().collect();
+
+    // If not told not to daemonize
+    if !args.contains(&"--no-daemon".to_string()) {
+        // Daemonize
+        if error::handle(daemonize(
+            path::Path::new("/tmp/void-builder.out"),
+            path::Path::new("/tmp/void-builder.err"),
+            path::Path::new("/tmp/void-builder.pid"),
+        )) == None
+        {
+            return ExitCode::FAILURE;
+        }
     }
-    
+
+    if !args.contains(&"--config".to_string()) {
+        let setting = error::handle_config_error(
+            config::Config::builder()
+                .add_source(config::File::with_name("/etc/void-builder/void-builder"))
+                .build(),
+        );
+    }
+
     // Return success
     return ExitCode::SUCCESS;
 }

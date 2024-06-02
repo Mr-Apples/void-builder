@@ -1,6 +1,6 @@
-use std::*;
-use git2::*;
 use crate::error::VoidBuilderError;
+use git2::*;
+use std::*;
 
 /// Returns a vector that contains all repositories in the given directory,
 /// takes the path that contains the repos.
@@ -9,7 +9,9 @@ use crate::error::VoidBuilderError;
 /// // Gets all repos in a given directory
 /// repos = detect_repos_in_dir("/var/local/void-builder/");
 /// ```
-pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Repository>, VoidBuilderError> {
+pub fn detect_repos_in_dir(
+    repo_storage_dir: &path::Path,
+) -> Result<Vec<Repository>, VoidBuilderError> {
     // Get an iterator for the directory in which to detect repositories
     let repo_dir_iter = fs::read_dir(repo_storage_dir)?;
 
@@ -23,14 +25,14 @@ pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Reposito
 
                 repositories.push(repo);
             }
-            Err(e) => return Err(VoidBuilderError::from(e))
+            Err(e) => return Err(VoidBuilderError::from(e)),
         };
     }
 
     return Ok(repositories);
 }
 
-/// Clones a repository and returns the repository object, 
+/// Clones a repository and returns the repository object,
 /// takes a repository url and the location to clone to.
 ///
 /// ```rust
@@ -41,9 +43,7 @@ pub fn clone_repo(url: &str, dir: &path::Path) -> Result<Repository, VoidBuilder
     let url_object = url::Url::parse(url)?;
 
     let mut dir_buf: path::PathBuf = dir.to_path_buf();
-    dir_buf = dir_buf.join(path::Path::new(
-        &url_object.to_string().replace("/", "")
-    ));
+    dir_buf = dir_buf.join(path::Path::new(&url_object.to_string().replace("/", "")));
 
     return Ok(Repository::clone(&url, dir_buf)?);
 }
@@ -52,7 +52,7 @@ pub fn clone_repo(url: &str, dir: &path::Path) -> Result<Repository, VoidBuilder
 /// Returns () if it succeeds else it returns the git2::Error object.
 ///
 /// ```rust
-/// // Updates a repository 
+/// // Updates a repository
 /// repository = git2::Repository::open("/path/to/repo");
 /// update_repo(repository);
 /// ```
@@ -61,7 +61,14 @@ pub fn update_repo_branch(repo: &Repository, branch: &str) -> Result<(), VoidBui
     let mut remote = repo.find_remote("origin")?;
 
     // Do the fetch
-    remote.fetch(&[format!("refs/heads/{}:refs/remotes/origin/{}", branch, branch)], None, None)?;
+    remote.fetch(
+        &[format!(
+            "refs/heads/{}:refs/remotes/origin/{}",
+            branch, branch
+        )],
+        None,
+        None,
+    )?;
 
     // Get latest current commit
     let latest_current_commit = get_latest_commit_for_branch(repo, branch)?;
@@ -80,6 +87,12 @@ pub fn update_repo_branch(repo: &Repository, branch: &str) -> Result<(), VoidBui
 }
 
 /// Returns the commit pointed at by the given branch
-fn get_latest_commit_for_branch<'a>(repo: &'a Repository, branch_name: &str) -> Result<Commit<'a>, Error> {
-    return repo.find_branch(branch_name, BranchType::Local)?.into_reference().peel_to_commit();
+fn get_latest_commit_for_branch<'a>(
+    repo: &'a Repository,
+    branch_name: &str,
+) -> Result<Commit<'a>, Error> {
+    return repo
+        .find_branch(branch_name, BranchType::Local)?
+        .into_reference()
+        .peel_to_commit();
 }
