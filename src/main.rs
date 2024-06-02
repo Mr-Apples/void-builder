@@ -63,14 +63,14 @@ fn main() -> ExitCode {
             path::Path::new("/tmp/void-builder.out"),
             path::Path::new("/tmp/void-builder.err"),
             path::Path::new("/tmp/void-builder.pid"),
-        )) == None
+        )).is_err()
         {
             return ExitCode::FAILURE;
         }
     }
 
     if !args.contains(&"--config".to_string()) {
-        let setting = error::handle_config_error(
+        let setting = error::handle(
             config::Config::builder()
                 .add_source(config::File::with_name("/etc/void-builder/void-builder"))
                 .build(),
