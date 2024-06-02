@@ -1,10 +1,10 @@
-use git2::*;
 use std::*;
+use git2::*;
 use crate::error::VoidBuilderError;
 
 /// Returns a vector that contains all repositories in the given directory,
 /// takes the path that contains the repos.
-/// 
+///
 /// ```rust
 /// // Gets all repos in a given directory
 /// repos = detect_repos_in_dir("/var/local/void-builder/");
@@ -32,7 +32,7 @@ pub fn detect_repos_in_dir(repo_storage_dir: &path::Path) -> Result<Vec<Reposito
 
 /// Clones a repository and returns the repository object, 
 /// takes a repository url and the location to clone to.
-/// 
+///
 /// ```rust
 /// // Clone a repo
 /// repo = clone_repo("https://github.com/Mr-Apples/void-builder.git", "/var/local/void-builder/");
@@ -50,7 +50,7 @@ pub fn clone_repo(url: &str, dir: &path::Path) -> Result<Repository, VoidBuilder
 
 /// Updates the given repository with upstream commit history, takes the repository object.
 /// Returns () if it succeeds else it returns the git2::Error object.
-/// 
+///
 /// ```rust
 /// // Updates a repository 
 /// repository = git2::Repository::open("/path/to/repo");

@@ -4,7 +4,7 @@ use std::fmt::{Debug, Display, Formatter};
 #[derive(Debug)]
 /// Struct to contain errors encountered by Void Builder
 pub struct VoidBuilderError {
-    message: String
+    message: String,
 }
 
 impl VoidBuilderError {
@@ -51,6 +51,6 @@ impl From<url::ParseError> for VoidBuilderError {
 
 impl From<daemonize::Error> for VoidBuilderError {
     fn from(value: daemonize::Error) -> Self {
-        return VoidBuilderError::new(value.to_string())
+        return VoidBuilderError::new(value.to_string());
     }
 }

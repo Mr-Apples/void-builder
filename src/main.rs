@@ -12,7 +12,7 @@ pub mod error;
 /// Daemonize the program, creates a pidfile and appends stdout + stdin to the given locations.
 /// The parameter `stdout`, `stderr` and `pidfile` are the locations of the stdout file, stdin file and pid file respectively.
 /// Returns `true` if the daemonization succeeded.
-/// 
+///
 /// ```rust
 /// // Daemonize the program
 /// daemonize(
@@ -37,5 +37,4 @@ fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> 
     return Ok(daemon.start()?);
 }
 
-fn main() {
-}
+fn main() {}
