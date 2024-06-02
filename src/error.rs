@@ -1,17 +1,52 @@
 use std::*;
+use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
+
+/// Handles a Result<T, VoidBuilderError>. If it is a Ok(T) return Some(T), otherwise print the error message and return None
+pub fn handle<T>(result: Result<T, VoidBuilderError>) -> Option<T> {
+    return match result {
+        Ok(value) => Some(value),
+        Err(e) => {
+            eprintln!("Void-Builder: {}", e.message);
+            None
+        }
+    }
+}
 
 #[derive(Debug)]
 /// Struct to contain errors encountered by Void Builder
 pub struct VoidBuilderError {
-    message: String,
+    pub message: String,
 }
 
 impl VoidBuilderError {
     /// Creates a new VoidBuilderError from the given error
-    fn new(message: String) -> VoidBuilderError {
+    pub fn new(message: String) -> VoidBuilderError {
         VoidBuilderError {
             message
+        }
+    }
+    
+    /// Prints the error
+    pub fn print(self) {
+        eprintln!("{}", self.message);
+    }
+}
+
+impl PartialEq for VoidBuilderError {
+    fn eq(&self, other: &Self) -> bool {
+        return if *self.message == *other.message {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        return if *self.message == *other.message {
+            true
+        } else {
+            false
         }
     }
 }
@@ -23,7 +58,7 @@ impl Display for VoidBuilderError {
 }
 
 /// Implement std::error::Error on VoidBuilderError
-impl error::Error for VoidBuilderError {}
+impl Error for VoidBuilderError {}
 
 /// Implements From<git2::Error> on VoidBuilderError
 impl From<git2::Error> for VoidBuilderError {
@@ -49,7 +84,9 @@ impl From<url::ParseError> for VoidBuilderError {
     }
 }
 
+/// Implements From<daemonize::Error> on VoidBuilderError
 impl From<daemonize::Error> for VoidBuilderError {
+    /// Create a VoidBuilderError from a daemonize::Error
     fn from(value: daemonize::Error) -> Self {
         return VoidBuilderError::new(value.to_string());
     }

@@ -1,5 +1,6 @@
-//! A tool that automatically builds xbps-src packages from gitHub repositories
+//! A tool that automatically builds xbps-src packages from git repositories
 use std::*;
+use std::process::ExitCode;
 use error::VoidBuilderError;
 
 // Modules
@@ -8,6 +9,10 @@ pub mod git_helper;
 
 /// A module containing an error struct used by Void Builder
 pub mod error;
+
+#[cfg(test)]
+/// A module containing all tests as submodules
+mod test;
 
 /// Daemonize the program, creates a pidfile and appends stdout + stdin to the given locations.
 /// The parameter `stdout`, `stderr` and `pidfile` are the locations of the stdout file, stdin file and pid file respectively.
@@ -37,4 +42,12 @@ fn daemonize(stdout: &path::Path, stderr: &path::Path, pidfile: &path::Path) -> 
     return Ok(daemon.start()?);
 }
 
-fn main() {}
+fn main() -> ExitCode {
+    // Daemonize
+    if error::handle(daemonize(path::Path::new("/tmp/void-builder.out"), path::Path::new("/tmp/void-builder.err"), path::Path::new("/tmp/void-builder.pid"))) == None {
+        return ExitCode::FAILURE
+    }
+    
+    // Return success
+    return ExitCode::SUCCESS;
+}
