@@ -33,15 +33,19 @@ fn daemonize(
     stderr: &path::Path,
     pidfile: &path::Path,
 ) -> Result<(), VoidBuilderError> {
-    let stdout = error::handle(fs::OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(stdout))?;
+    let stdout = error::handle(
+        fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(stdout),
+    )?;
 
-    let stderr = error::handle(fs::OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(stderr))?;
+    let stderr = error::handle(
+        fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(stderr),
+    )?;
 
     let daemon = daemonize::Daemonize::new()
         .pid_file(pidfile)
@@ -76,7 +80,7 @@ fn main() -> Result<(), VoidBuilderError> {
                 .build(),
         );
     }
-    
+
     // Return ok
     return Ok(());
 }

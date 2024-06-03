@@ -27,7 +27,10 @@ mod error_tests {
     fn test_handle_result_err() {
         let result: Result<(), VoidBuilderError> = Err(VoidBuilderError::new("Error".to_string()));
 
-        assert_eq!(Err(VoidBuilderError::new("Error".to_string())), handle(result))
+        assert_eq!(
+            Err(VoidBuilderError::new("Error".to_string())),
+            handle(result)
+        )
     }
 }
 

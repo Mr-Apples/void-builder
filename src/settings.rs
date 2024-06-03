@@ -1,33 +1,54 @@
-use std::collections::VecDeque;
+use crate::error::VoidBuilderError;
 use config::*;
+use std::collections::VecDeque;
 
 #[derive(Debug)]
 /// A struct that contains command line parameters,
 /// It implements config::Source and can therefore be used with config-rs
 struct ComandLineSource {
-    args: Map<String, Value>
+    args: Map<String, Value>,
 }
 
 impl ComandLineSource {
     /// Creates a new CommandLineSource from a vector of args
-    fn new(mut args: VecDeque<String>) -> Self {
+    fn new(mut args: VecDeque<String>) -> Result<Self, VoidBuilderError> {
         // Create an empty map to contain the args
         let mut args_map: Map<String, Value> = Map::new();
 
         // Remove first arg (the executable name)
         args.pop_front();
 
-        for index in 0..args.len() {
-            let arg = args.get(index);
-            if arg == "--config" {
-                index
-                args_map.insert(arg, args)
-            }
+        // Check if --config is specified
+        match args.iter().position(|x| x == "--config") {
+            Some(index) => match args.get(index + 1) {
+                Some(arg) => {
+                    if args.contains(&"--".to_string()) {
+                        return Err(VoidBuilderError::new(
+                            "Incorrect parameters: --config specified with no value".to_string(),
+                        ));
+                    }
+
+                    if !std::path::Path::new(arg).exists() {
+                        return Err(VoidBuilderError::new(
+                            "Config Error: Config file not found".to_string(),
+                        ));
+                    }
+
+                    args_map.insert(
+                        "config".to_string(),
+                        Value::new(None, ValueKind::String(arg.to_string())),
+                    );
+                }
+                None => {
+                    return Err(VoidBuilderError::new(
+                        "Incorrect parameters: --config specified with no value".to_string(),
+                    ))
+                }
+            },
+            None => (),
         }
 
-        return ComandLineSource {
-            args: args_map
-        }
+        return Ok(ComandLineSource { args: args_map });
     }
 }
 
