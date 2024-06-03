@@ -10,6 +10,9 @@ pub mod git_helper;
 /// A module containing an error struct used by Void Builder
 pub mod error;
 
+/// A module containing logic for config files + settings
+pub mod settings;
+
 #[cfg(test)]
 /// A module containing all tests as submodules
 mod test;
@@ -30,15 +33,15 @@ fn daemonize(
     stderr: &path::Path,
     pidfile: &path::Path,
 ) -> Result<(), VoidBuilderError> {
-    let stdout = fs::OpenOptions::new()
+    let stdout = error::handle(fs::OpenOptions::new()
         .append(true)
         .create(true)
-        .open(stdout)?;
+        .open(stdout))?;
 
-    let stderr = fs::OpenOptions::new()
+    let stderr = error::handle(fs::OpenOptions::new()
         .append(true)
         .create(true)
-        .open(stderr)?;
+        .open(stderr))?;
 
     let daemon = daemonize::Daemonize::new()
         .pid_file(pidfile)
@@ -49,24 +52,21 @@ fn daemonize(
         .stdout(stdout)
         .stderr(stderr);
 
-    return Ok(daemon.start()?);
+    return error::handle(daemon.start());
 }
 
-fn main() -> ExitCode {
+fn main() -> Result<(), VoidBuilderError> {
     // Get command-line args
     let args: Vec<_> = env::args().collect();
 
     // If not told not to daemonize
     if !args.contains(&"--no-daemon".to_string()) {
         // Daemonize
-        if error::handle(daemonize(
+        error::handle(daemonize(
             path::Path::new("/tmp/void-builder.out"),
             path::Path::new("/tmp/void-builder.err"),
             path::Path::new("/tmp/void-builder.pid"),
-        )).is_err()
-        {
-            return ExitCode::FAILURE;
-        }
+        ))?;
     }
 
     if !args.contains(&"--config".to_string()) {
@@ -76,7 +76,7 @@ fn main() -> ExitCode {
                 .build(),
         );
     }
-
-    // Return success
-    return ExitCode::SUCCESS;
+    
+    // Return ok
+    return Ok(());
 }

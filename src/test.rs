@@ -17,9 +17,9 @@ mod error_tests {
     #[test]
     // Test handling an Ok() variant
     fn test_handle_result_ok() {
-        let result = Ok(());
+        let result: Result<(), VoidBuilderError> = Ok(());
 
-        assert_eq!(Some(()), handle(result))
+        assert_eq!(Ok(()), handle(result))
     }
 
     #[test]
@@ -27,10 +27,11 @@ mod error_tests {
     fn test_handle_result_err() {
         let result: Result<(), VoidBuilderError> = Err(VoidBuilderError::new("Error".to_string()));
 
-        assert_eq!(None, handle(result))
+        assert_eq!(Err(VoidBuilderError::new("Error".to_string())), handle(result))
     }
 }
 
 #[cfg(test)]
+/// TODO: Write tests for this
 /// A module containing all the tests for the git_helper module
 mod git_helper_tests {}

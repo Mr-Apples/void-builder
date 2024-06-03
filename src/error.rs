@@ -26,7 +26,7 @@ impl VoidBuilderError {
     }
 
     /// Prints the error
-    pub fn print(self) {
+    pub fn print(&self) {
         eprintln!("{}", self.message);
     }
 }
